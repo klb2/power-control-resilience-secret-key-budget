@@ -28,7 +28,9 @@ The following files are provided in this repository:
 - `ultimate_ruin_prob.py`: Python module that contains functions to calculate
   the probability of ultimate ruin (for the random timing scheme).
 - `rayleigh.py`: Python module that contains functions related to Rayleigh
-  fading (distribution functions, ...)
+  fading (distribution functions, ...).
+- `combine_results.py`: Python script that combines results with different
+  constant power levels at given time slots.
 
 
 ## Usage
