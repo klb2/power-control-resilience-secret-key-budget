@@ -1,4 +1,4 @@
-# Template for Reproducible Research Papers
+# Power Control for Resilient Communication Systems With a Secret-Key Budget
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/klb2/power-control-resilience-secret-key-budget)
 ![GitHub](https://img.shields.io/github/license/klb2/power-control-resilience-secret-key-budget)
