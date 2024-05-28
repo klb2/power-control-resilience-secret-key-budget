@@ -1,44 +1,17 @@
 # Template for Reproducible Research Papers
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/klb2/reproducible-paper-python-template/HEAD)
-![GitHub](https://img.shields.io/github/license/klb2/reproducible-paper-python-template)
-[![DOI](https://img.shields.io/badge/doi-10.1109/TWC.2022.3172760-informational)](https://doi.org/10.1109/TWC.2022.3172760)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/klb2/power-control-resilience-secret-key-budget)
+![GitHub](https://img.shields.io/github/license/klb2/power-control-resilience-secret-key-budget)
 
 
-```diff
-! Update badge information/links
-```
+This repository is accompanying the paper "Power Control for Resilient
+Communication Systems With a Secret-Key Budget" (Karl-L. Besser, Rafael
+Schaefer, and Vincent Poor, IEEE International Symposium on Personal, Indoor
+and Mobile Radio Communications (PIMRC), Sep. 2024).
 
-This repository provides a template for Python code that is accompanying a
-research paper.
-Most likely, this will be an implementation of an algorithm and/or simulation
-results.
-
-The code should be made publicly accessible in order to allow everybody to
-reproduce the results presented in the paper.
-
-You can use this template/fork it and use it as a starting point. You find a
-basic structure in `main.py`, where only need to add your custom code.
-This README also already contains all important information and you only need
-to adjust the parts specific to your project.
-The `run.sh` script should contain the exact commands that you used to generate
-the results/plots in your paper. In particular, you should make sure to specify
-all of the parameters.
-
-The proposed structure of the README is
-1. Information about the paper (title, authors, journal/conference, DOI, arXiv)
-2. File list of all files that are provided in the repository (with short
-   description)
-3. Usage description. If you provide Jupyter notebooks this can also include a
-   link to Binder.
-4. Acknowledgements (funding information, ...)
-5. License and Referencing (description of license and how to cite your work,
-   e.g., the bibtex entry of your paper)
-
-You can find some general ideas on the structure and required aspects of the
-repository in [this blog
-post](https://klb2.gitlab.io/writing/python/2021/12/20/reproducible-papers.html)
-(independent of the used programming language).
+The idea is to give an interactive version of the calculations and presented
+concepts to the reader. One can also change different parameters and explore
+different behaviors on their own.
 
 
 ## File List
@@ -46,72 +19,71 @@ The following files are provided in this repository:
 
 - `run.sh`: Bash script that reproduces the figures presented in the paper.
 - `util.py`: Python module that contains utility functions, e.g., for saving results.
-```diff
-- `main.py`: Python script that...
-- ...
-```
+- `constant_power.py`: Python script that runs the main simulation with a
+  constant power allocation.
+- `ide_stopping_time.py`: Python module that contains functions to calculate
+  the stopping times numerically via solving an IDE.
+- `mc_stopping_time.py`: Python module that contains functions to determine the
+  stopping times via Monte Carlo simulations.
+- `ultimate_ruin_prob.py`: Python module that contains functions to calculate
+  the probability of ultimate ruin (for the random timing scheme).
+- `rayleigh.py`: Python module that contains functions related to Rayleigh
+  fading (distribution functions, ...)
+
 
 ## Usage
 ### Running it online
-The easiest way is to use services like [Binder](https://mybinder.org/) to run
-the notebook online. Simply navigate to
-```diff
-! Add binder link.
-```
-to run the notebooks in your browser without setting everything up locally.
+You can use services like [CodeOcean](https://codeocean.com) or
+[Binder](https://mybinder.org/v2/gh/klb2/power-control-resilience-secret-key-budget/HEAD)
+to run the scripts online.
 
 ### Local Installation
 If you want to run it locally on your machine, Python3 and Jupyter are needed.
 The present code was developed and tested with the following versions:
-```diff
-- Python 3.8
-- Jupyter 1.0
-- numpy 1.18
-- scipy 1.4
-```
+
+- Python 3.12
+- numpy 1.26
+- scipy 1.13
+- matplotlib 3.9
+- pandas 2.2
 
 Make sure you have [Python3](https://www.python.org/downloads/) installed on
 your computer.
-You can then install the required packages (including Jupyter) by running
+You can then install the required packages by running
 ```bash
 pip3 install -r requirements.txt
-jupyter nbextension enable --py widgetsnbextension
 ```
 This will install all the needed packages which are listed in the requirements 
-file. The second line enables the interactive controls in the Jupyter
-notebooks.
-
-Finally, you can run the Jupyter notebooks with
-```bash
-jupyter notebook
-```
-
-You can also recreate the figures from the paper by running
+file. 
+You can then recreate the figures from the paper by running
 ```bash
 bash run.sh
 ```
 
 
 ## Acknowledgements
-This research was supported by
-```diff
-! Add funding information
-```
+This research was supported by the German Research Foundation (DFG) under
+grants BE 8098/1-1 and SCHA 1944/11-1, by the German Federal Ministry of
+Education and Research (BMBF) within the national initiative on 6G
+Communication Systems through the research hub 6G-life under Grant 16KISK001K
+as well as the 6G-ANNA project under Grant 16KISK103, and by the U.S. National
+Science Foundation under Grants CNS-2128448 and ECCS-2335876.
 
 
 ## License and Referencing
-This program is licensed under the GPLv3 license. If you in any way use this
+This program is licensed under the MIT license. If you in any way use this
 code for research that results in publications, please cite our original
 article listed above.
 
 You can use the following BibTeX entry
 ```bibtex
-@article{...,
-  author = {...},
-  title = {...},
-  ...
+@inproceedings{Besser2024pimrc,
+  author = {Besser, Karl-Ludwig and Schaefer, Rafael F. and Poor, H. Vincent},
+  title = {Power Control for Resilient Communication Systems With a Secret-Key Budget},
+  booktitle = {2024 IEEE International Symposium on Personal, Indoor and Mobile Radio Communications (PIMRC)},
+  year = {2024},
+  month = {9},
+  publisher = {IEEE},
+  venue = {Valencia, Spain},
 }
-```
-```diff
-! Add bibtex entry of the published paper
 ```
