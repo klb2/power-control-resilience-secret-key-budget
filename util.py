@@ -11,6 +11,7 @@ def find_closest_element_idx(array, value):
 def to_decibel(power):
     return 10 * np.log10(power)
 
+
 def db_to_linear(value):
     return 10 ** (np.array(value) / 10.0)
 
