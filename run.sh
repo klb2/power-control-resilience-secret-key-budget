@@ -17,3 +17,6 @@ for P_TX in {0..20..2}
 do
 python constant_power.py -b "$INIT_BUDGET" -v -p "$PROB_TX" --num_samples="$NUM_SAMP" -P "$P_TX" -T "$NUM_TIME" --export --plot
 done
+
+python train.py
+# python evaluate_parallel.py -m "ADD THE MODEL PATH HERE" -l 5 -b 10 -e 0 -p .35 -r 2000 -t 2000 --plot
