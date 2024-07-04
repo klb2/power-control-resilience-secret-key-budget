@@ -1,4 +1,3 @@
-import os.path
 import logging
 
 import numpy as np
@@ -14,13 +13,8 @@ from environment import SecretKeyEnv
 from comparison import (
     constant_power_allocation,
     calculate_constant_power_level_balance,
-    calculate_min_budget,
-    max_power_when_below,
     adaptive_power_conditional_expectation,
-    adaptive_power_budget_difference,
 )
-from rayleigh import pdf_skg_rate_rayleigh, sf_skg_rate_rayleigh
-from ultimate_ruin_prob import calculate_ultimate_ruin_mixed
 
 from util import to_decibel, db_to_linear, export_results
 
@@ -279,7 +273,7 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--message_length", type=float, default=5)
     parser.add_argument("-b", "--snr_bob_db", type=float, default=10)
     parser.add_argument("-e", "--snr_eve_db", type=float, default=0)
-    parser.add_argument("-p", "--prob_tx", type=float, default=0.2)
+    parser.add_argument("-p", "--prob_tx", type=float, default=0.35)
     # parser.add_argument("--max_power_db", type=float, default=30)
     parser.add_argument("-r", "--num_runs", type=int, default=100)
     parser.add_argument("-t", "--num_timesteps", type=int, default=1000)
