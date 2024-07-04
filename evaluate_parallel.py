@@ -26,6 +26,7 @@ from util import to_decibel, db_to_linear, export_results
 
 LOGGER = logging.getLogger(__name__)
 
+
 def load_algorithms(env_config, **kwargs):
     algorithms = {}
 
@@ -38,26 +39,36 @@ def load_algorithms(env_config, **kwargs):
         alg = Algorithm.from_checkpoint(checkpoint_path)
         alg.restore(checkpoint_path)
         policy = alg.get_policy()
-        policy.config['explore'] = False
+        policy.config["explore"] = False
         if policy.is_recurrent():
             initial_state = policy.get_initial_state()
-        #algorithms['model'] = policy.compute_single_action
-        algorithms['model'] = alg.compute_single_action
+        # algorithms['model'] = policy.compute_single_action
+        algorithms["model"] = alg.compute_single_action
 
     _power_level, _power_action = calculate_constant_power_level_balance(env_config)
-    algorithms["constant"] = lambda state: constant_power_allocation(state, _power_action)
-    algorithms["constant10dB"] = lambda state: constant_power_allocation(state, 10/env_config["max_power_db"])
-    algorithms["constant30"] = lambda state: constant_power_allocation(state, to_decibel(30)/env_config["max_power_db"])
-    algorithms["adaptiveCondExpect"] = lambda state: adaptive_power_conditional_expectation(state, env_config)
+    algorithms["constant"] = lambda state: constant_power_allocation(
+        state, _power_action
+    )
+    algorithms["constant10dB"] = lambda state: constant_power_allocation(
+        state, 10 / env_config["max_power_db"]
+    )
+    algorithms["constant30"] = lambda state: constant_power_allocation(
+        state, to_decibel(30) / env_config["max_power_db"]
+    )
+    algorithms["adaptiveCondExpect"] = (
+        lambda state: adaptive_power_conditional_expectation(state, env_config)
+    )
     algorithms["fullPower"] = lambda state: constant_power_allocation(state, 1)
     algorithms["lowPower"] = lambda state: constant_power_allocation(state, 0)
     return algorithms, initial_state
 
+
 def main(test_config: dict):
     LOGGER.info("Updating config from training...")
     from configs import env_config
+
     env_config.update(test_config)
-    env_config['init_budget'] = 70
+    env_config["init_budget"] = 70
 
     snr_bob_db = env_config.pop("snr_bob_db")
     snr_eve_db = env_config.pop("snr_eve_db")
@@ -82,43 +93,42 @@ def main(test_config: dict):
     export = env_config.pop("export")
     LOGGER.info("Done.")
 
-
     def inner_loop(run, algorithm, num_timesteps, state=None):
         LOGGER.info(f"Run: {run+1:d}/{num_runs:d}")
-        _rewards = np.nan*np.zeros(num_timesteps)
-        _budgets = np.nan*np.zeros(num_timesteps)
-        _actions = np.nan*np.zeros(num_timesteps)
-        _powers = np.nan*np.zeros(num_timesteps)
-        _alert_outage_probs = np.nan*np.zeros(num_timesteps)
+        _rewards = np.nan * np.zeros(num_timesteps)
+        _budgets = np.nan * np.zeros(num_timesteps)
+        _actions = np.nan * np.zeros(num_timesteps)
+        _powers = np.nan * np.zeros(num_timesteps)
+        _alert_outage_probs = np.nan * np.zeros(num_timesteps)
         env = SecretKeyEnv(env_config, seed_id=run)
         obs, _ = env.reset(seed=run)
         prev_action = [1]
-        prev_reward = 0.
+        prev_reward = 0.0
         for time_slot in range(num_timesteps):
             # action = alg.compute_single_action(state)
             if state is None:
                 action = algorithm(obs)
             else:
-                action, state, _ = algorithm(obs, state, prev_action=prev_action,
-                                             prev_reward=prev_reward)
+                action, state, _ = algorithm(
+                    obs, state, prev_action=prev_action, prev_reward=prev_reward
+                )
             obs, reward, terminated, truncated, info = env.step(action)
             prev_action = action
             prev_reward = reward
             budget = obs["budget"][0]
-            alert_outage_prob = info['alert_outage_prob'][0]
+            alert_outage_prob = info["alert_outage_prob"][0]
             _rewards[time_slot] = reward
             _budgets[time_slot] = budget
             _actions[time_slot] = action[0]
             if obs["is_transmission"]:
                 _power = np.nan
             else:
-                _power = 10**(action[0]*env_config["max_power_db"]/10.)
+                _power = 10 ** (action[0] * env_config["max_power_db"] / 10.0)
             _powers[time_slot] = _power
             _alert_outage_probs[time_slot] = alert_outage_prob
             if terminated or truncated:
                 break
         return _rewards, _budgets, _actions, _powers, _alert_outage_probs
-
 
     rewards = {}
     budgets = {}
@@ -128,72 +138,86 @@ def main(test_config: dict):
     alert_outage_probs = {}
     for _name, _algorithm in algorithms.items():
         LOGGER.info(f"Algorithm: {_name}")
-        #_rewards, _budgets, _actions, _powers, _alert_outage_probs = joblib.Parallel(n_jobs=joblib.cpu_count()//2)(
+        # _rewards, _budgets, _actions, _powers, _alert_outage_probs = joblib.Parallel(n_jobs=joblib.cpu_count()//2)(
         if _name == "model":
-            _results = [inner_loop(run, _algorithm, num_timesteps, state=initial_state)
-                        for run in range(num_runs)]
+            _results = [
+                inner_loop(run, _algorithm, num_timesteps, state=initial_state)
+                for run in range(num_runs)
+            ]
         else:
             _backend = "threads" if _name == "model" else None
-            _results = joblib.Parallel(n_jobs=joblib.cpu_count()//2, prefer=_backend)(
-                    joblib.delayed(inner_loop)(run, _algorithm, num_timesteps)
-                    for run in range(num_runs))
+            _results = joblib.Parallel(n_jobs=joblib.cpu_count() // 2, prefer=_backend)(
+                joblib.delayed(inner_loop)(run, _algorithm, num_timesteps)
+                for run in range(num_runs)
+            )
         _results = np.array(_results)
         rewards[_name] = _results[:, 0]
         budgets[_name] = _results[:, 1]
         actions[_name] = _results[:, 2]
         powers[_name] = _results[:, 3]
         alert_outage_probs[_name] = _results[:, 4]
-    #print(budgets)
+    # print(budgets)
 
-    #powers = 10 ** (actions * env_config["max_power_db"] / 10.0)
+    # powers = 10 ** (actions * env_config["max_power_db"] / 10.0)
     # powers_db = actions*env_config['max_power_db']
-    average_powers = {k: np.nancumsum(v, axis=1)/(np.arange(num_timesteps)+1-np.cumsum(np.isnan(v), axis=1))
-                      for k, v in powers.items()}
-    
-    alert_outage_prob_violations = {k: np.nan_to_num(v, nan=1) > env_config['outage_prob_alert']
-                                    for k, v in alert_outage_probs.items()}
+    average_powers = {
+        k: np.nancumsum(v, axis=1)
+        / (np.arange(num_timesteps) + 1 - np.cumsum(np.isnan(v), axis=1))
+        for k, v in powers.items()
+    }
 
-    plots = ({"title": "Budget",
-                "data": budgets,
-                "xlabel": "Time $t$",
-                "ylabel": "SK Budget",
-                "yscale": "linear",
-                "nan": 0.,
-              "fname_prefix": "budget",
-                },
-                {"title": "Outage Probability when entering alert mode",
-                "data": alert_outage_probs,
-                "xlabel": "Time $t$",
-                "ylabel": "Outage Probability",
-                "yscale": "log",
-                "nan": 1.,
-              "fname_prefix": "alert_outage_prob",
-                },
-                {"title": "Resilience Outage Probability",
-                "data": alert_outage_prob_violations,
-                "xlabel": "Time $t$",
-                "ylabel": "Resilience Outage Probability $\\alpha$",
-                "yscale": "log",
-                "nan": 1.,
-              "fname_prefix": "resilience_outage_prob",
-                },
-                {"title": "Average Power",
-                "data": average_powers,
-                "xlabel": "Time $t$",
-                "ylabel": "Average Transmit Power",
-                "yscale": "log",
-                "nan": np.nan,
-              "fname_prefix": "avg_power",
-                },
-                {"title": "Power",
-                "data": powers,
-                "xlabel": "Time $t$",
-                "ylabel": "Inst. Transmit Power",
-                "yscale": "log",
-                "nan": np.nan,
-              "fname_prefix": "power",
-                },
-                )
+    alert_outage_prob_violations = {
+        k: np.nan_to_num(v, nan=1) > env_config["outage_prob_alert"]
+        for k, v in alert_outage_probs.items()
+    }
+
+    plots = (
+        {
+            "title": "Budget",
+            "data": budgets,
+            "xlabel": "Time $t$",
+            "ylabel": "SK Budget",
+            "yscale": "linear",
+            "nan": 0.0,
+            "fname_prefix": "budget",
+        },
+        {
+            "title": "Outage Probability when entering alert mode",
+            "data": alert_outage_probs,
+            "xlabel": "Time $t$",
+            "ylabel": "Outage Probability",
+            "yscale": "log",
+            "nan": 1.0,
+            "fname_prefix": "alert_outage_prob",
+        },
+        {
+            "title": "Resilience Outage Probability",
+            "data": alert_outage_prob_violations,
+            "xlabel": "Time $t$",
+            "ylabel": "Resilience Outage Probability $\\alpha$",
+            "yscale": "log",
+            "nan": 1.0,
+            "fname_prefix": "resilience_outage_prob",
+        },
+        {
+            "title": "Average Power",
+            "data": average_powers,
+            "xlabel": "Time $t$",
+            "ylabel": "Average Transmit Power",
+            "yscale": "log",
+            "nan": np.nan,
+            "fname_prefix": "avg_power",
+        },
+        {
+            "title": "Power",
+            "data": powers,
+            "xlabel": "Time $t$",
+            "ylabel": "Inst. Transmit Power",
+            "yscale": "log",
+            "nan": np.nan,
+            "fname_prefix": "power",
+        },
+    )
     if plot:
         cmap = plt.colormaps["Set1"]
 
@@ -204,7 +228,13 @@ def main(test_config: dict):
         axs.set_yscale("log")
         for _idx, _name in enumerate(algorithms):
             _color = cmap(_idx)
-            axs.plot(np.mean(average_powers[_name][:, -1]), np.mean(alert_outage_prob_violations[_name][:, -1]), 'o', label=_name, color=_color)
+            axs.plot(
+                np.mean(average_powers[_name][:, -1]),
+                np.mean(alert_outage_prob_violations[_name][:, -1]),
+                "o",
+                label=_name,
+                color=_color,
+            )
         axs.legend()
         axs.set_xlabel("Average Power")
         axs.set_ylabel("Resilience Outage Probability $\\alpha$")
@@ -213,11 +243,11 @@ def main(test_config: dict):
 
         for _plot in plots:
             fig, axs = plt.subplots()
-            axs.set_xlabel(_plot['xlabel'])
-            axs.set_ylabel(_plot['ylabel'])
-            axs.set_title(_plot['title'])
-            axs.set_yscale(_plot['yscale'])
-            values = _plot['data']
+            axs.set_xlabel(_plot["xlabel"])
+            axs.set_ylabel(_plot["ylabel"])
+            axs.set_title(_plot["title"])
+            axs.set_yscale(_plot["yscale"])
+            values = _plot["data"]
             for _idx, _name in enumerate(algorithms):
                 _color = cmap(_idx)
                 _values = values[_name]
@@ -228,10 +258,16 @@ def main(test_config: dict):
 
     if export:
         for _data_var in plots:
-            _results = {k: np.nanmean(np.nan_to_num(v, nan=_data_var.get("nan", 0)), axis=0)
-                        for k, v in _data_var["data"].items()}
-            _results['time'] = timeline
-            _fname = "{prefix}-p{prob_tx:.2f}-B{init_budget:d}-T{num_timesteps:d}.dat".format(prefix=_data_var['fname_prefix'], num_timesteps=num_timesteps, **env_config)
+            _results = {
+                k: np.nanmean(np.nan_to_num(v, nan=_data_var.get("nan", 0)), axis=0)
+                for k, v in _data_var["data"].items()
+            }
+            _results["time"] = timeline
+            _fname = "{prefix}-p{prob_tx:.2f}-B{init_budget:d}-T{num_timesteps:d}.dat".format(
+                prefix=_data_var["fname_prefix"],
+                num_timesteps=num_timesteps,
+                **env_config,
+            )
             export_results(_results, _fname)
 
 
@@ -244,7 +280,7 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--snr_bob_db", type=float, default=10)
     parser.add_argument("-e", "--snr_eve_db", type=float, default=0)
     parser.add_argument("-p", "--prob_tx", type=float, default=0.2)
-    #parser.add_argument("--max_power_db", type=float, default=30)
+    # parser.add_argument("--max_power_db", type=float, default=30)
     parser.add_argument("-r", "--num_runs", type=int, default=100)
     parser.add_argument("-t", "--num_timesteps", type=int, default=1000)
     parser.add_argument("--plot", action="store_true")

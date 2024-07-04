@@ -13,8 +13,8 @@ class SecretKeyEnv(gym.Env):
         if seed_id is None:
             self.rng = np.random.default_rng()
         else:
-            self.rng = np.random.default_rng([seed_id, 0x8c3c010cb4754c905776b])
-        #self.action_space = gym.spaces.Box(low=0, high=np.inf, shape=(1,))
+            self.rng = np.random.default_rng([seed_id, 0x8C3C010CB4754C905776B])
+        # self.action_space = gym.spaces.Box(low=0, high=np.inf, shape=(1,))
         self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,))
         self.observation_space = gym.spaces.Dict(
             {
@@ -37,12 +37,14 @@ class SecretKeyEnv(gym.Env):
         self.time_limit = int(env_config.get("time_limit", 5000))
         self.max_episode_steps = int(env_config.get("time_limit", 5000))
 
-        self.rv_alert_duration = env_config['rv_alert_duration']
-        self.outage_prob_alert = env_config['outage_prob_alert']
-        self.min_budget = self.rv_alert_duration.ppf(1-self.outage_prob_alert)*self.message_length
+        self.rv_alert_duration = env_config["rv_alert_duration"]
+        self.outage_prob_alert = env_config["outage_prob_alert"]
+        self.min_budget = (
+            self.rv_alert_duration.ppf(1 - self.outage_prob_alert) * self.message_length
+        )
 
-        self.init_budget = env_config.get("init_budget", 1.*self.min_budget)
-        self.budget = 1.*self.init_budget
+        self.init_budget = env_config.get("init_budget", 1.0 * self.min_budget)
+        self.budget = 1.0 * self.init_budget
 
         self.resilience_outage_counter = 0
         self.avg_power = 0
@@ -60,17 +62,19 @@ class SecretKeyEnv(gym.Env):
         return state, channel_gain_eve
 
     def reset(self, *, seed=None, options=None):
-        #super().reset(seed=seed, options=options)
+        # super().reset(seed=seed, options=options)
         if seed is not None:
-            self.rng = np.random.default_rng([seed, 0x8c3c010cb4754c905776b])
+            self.rng = np.random.default_rng([seed, 0x8C3C010CB4754C905776B])
         elif self.seed_id is not None:
-            self.rng = np.random.default_rng([self.seed_id, 0x8c3c010cb4754c905776b])
-        #np.random.seed(seed)
+            self.rng = np.random.default_rng([self.seed_id, 0x8C3C010CB4754C905776B])
+        # np.random.seed(seed)
         reset_obs = {
             "budget": np.array([self.init_budget], dtype=np.float32),
-            "channel_bob": np.array([self.rv_bob.rvs(random_state=self.rng)], dtype=np.float32),
+            "channel_bob": np.array(
+                [self.rv_bob.rvs(random_state=self.rng)], dtype=np.float32
+            ),
             "is_transmission": 0,
-            "net_income": np.array([0.], dtype=np.float32),
+            "net_income": np.array([0.0], dtype=np.float32),
         }
         self.budget = self.init_budget
         self.time_step = 0
@@ -87,25 +91,28 @@ class SecretKeyEnv(gym.Env):
         action = action[0]
         state, channel_eve = self.get_system_state()
 
-        is_transmission = state['is_transmission']
-        channel_bob = state['channel_bob']
+        is_transmission = state["is_transmission"]
+        channel_bob = state["channel_bob"]
         if is_transmission:
-            #power_tx = (2**self.message_length-1)/channel_bob
+            # power_tx = (2**self.message_length-1)/channel_bob
             net_income = np.array([-self.message_length])
         else:
-            power_tx = 10**(action*self.max_power_db/10.)
+            power_tx = 10 ** (action * self.max_power_db / 10.0)
             channel_eve = self.rv_eve.rvs(random_state=self.rng)
-            net_income = np.log2((1 + power_tx*channel_bob + power_tx*channel_eve)/(1+power_tx*channel_eve))
+            net_income = np.log2(
+                (1 + power_tx * channel_bob + power_tx * channel_eve)
+                / (1 + power_tx * channel_eve)
+            )
             self.number_skg = self.number_skg + 1
-            #self.avg_power = self.avg_power + (power_tx - self.avg_power)/self.number_skg
+            # self.avg_power = self.avg_power + (power_tx - self.avg_power)/self.number_skg
             self.powers.append(power_tx)
             self.avg_power = np.mean(self.powers[-10:])
-            #self.avg_power = np.mean(self.powers[-20:])
-            #self.avg_power = np.mean(self.powers[-100:])
+            # self.avg_power = np.mean(self.powers[-20:])
+            # self.avg_power = np.mean(self.powers[-100:])
         self.budget = self.budget + net_income
 
         terminated = False
-        #if self.budget < self.min_budget:
+        # if self.budget < self.min_budget:
         if self.budget <= 0:
             terminated = True
             self.budget = np.array([0], dtype=np.float32)
@@ -118,30 +125,36 @@ class SecretKeyEnv(gym.Env):
         obs = state
 
         # Info
-        alert_outage_prob = self.rv_alert_duration.sf(self.budget/self.message_length)
-        alert_outage_prob_log = self.rv_alert_duration.logsf(self.budget/self.message_length)
-        info = {"budget": self.budget,
-                "alert_outage_prob": alert_outage_prob,
-                "alert_outage_prob_log": alert_outage_prob_log,
-                "is_transmission": is_transmission,
-               }
+        alert_outage_prob = self.rv_alert_duration.sf(self.budget / self.message_length)
+        alert_outage_prob_log = self.rv_alert_duration.logsf(
+            self.budget / self.message_length
+        )
+        info = {
+            "budget": self.budget,
+            "alert_outage_prob": alert_outage_prob,
+            "alert_outage_prob_log": alert_outage_prob_log,
+            "is_transmission": is_transmission,
+        }
 
         if alert_outage_prob > self.outage_prob_alert:
             self.resilience_outage_counter = self.resilience_outage_counter + 1
 
-
         if is_transmission:
-            reward = 1 # positive as incentive to stay alive # 0
+            reward = 1  # positive as incentive to stay alive # 0
         else:
-            power_reward = -50*self.avg_power / db_to_linear(self.max_power_db)
-            outage_reward = -10*np.log10(self.resilience_outage_counter/self.time_step) if self.resilience_outage_counter > 0 else 10
+            power_reward = -50 * self.avg_power / db_to_linear(self.max_power_db)
+            outage_reward = (
+                -10 * np.log10(self.resilience_outage_counter / self.time_step)
+                if self.resilience_outage_counter > 0
+                else 10
+            )
             alert_reward = -np.log10(np.clip(alert_outage_prob, 1e-10, 1))
-            budget_reward = 10*np.minimum(1.-self.min_budget/self.budget, 0)
+            budget_reward = 10 * np.minimum(1.0 - self.min_budget / self.budget, 0)
             reward = power_reward + outage_reward + budget_reward + alert_reward
 
             reward = reward[0]
             if terminated:
-                reward = -100000*self.time_limit/self.time_step
+                reward = -100000 * self.time_limit / self.time_step
         info["reward"] = reward
 
         truncated = False
@@ -152,12 +165,14 @@ class SecretKeyEnv(gym.Env):
 
 if __name__ == "__main__":
     from scipy import stats
-    env_config = {"message_length": 5,
-                  "rv_bob": stats.expon(scale=2),
-                  "rv_eve": stats.expon(scale=1),
-                  "prob_tx": .1,
-                  "rv_alert_duration": stats.poisson(mu=5),
-                  "outage_prob_alert": 1e-3,
-                }
+
+    env_config = {
+        "message_length": 5,
+        "rv_bob": stats.expon(scale=2),
+        "rv_eve": stats.expon(scale=1),
+        "prob_tx": 0.1,
+        "rv_alert_duration": stats.poisson(mu=5),
+        "outage_prob_alert": 1e-3,
+    }
     env = SecretKeyEnv(env_config)
     check_env(env)

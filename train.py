@@ -32,13 +32,17 @@ if __name__ == "__main__":
         param_space={
             "env": SecretKeyEnv,
             "env_config": env_config,
-            "model": {"free_log_std": True,
-                      "use_lstm": False,
-                     },
+            "model": {
+                "free_log_std": True,
+                "use_lstm": False,
+            },
         },
-        run_config=train.RunConfig(stop={"training_iteration": 5000},
-                                   checkpoint_config=train.CheckpointConfig(num_to_keep=2, checkpoint_at_end=True,
-                                                                            checkpoint_frequency=4)),
+        run_config=train.RunConfig(
+            stop={"training_iteration": 5000},
+            checkpoint_config=train.CheckpointConfig(
+                num_to_keep=2, checkpoint_at_end=True, checkpoint_frequency=4
+            ),
+        ),
     )
     results = tuner.fit()
     best_result = results.get_best_result()
