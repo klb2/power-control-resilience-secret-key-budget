@@ -4,10 +4,12 @@
 ![GitHub](https://img.shields.io/github/license/klb2/power-control-resilience-secret-key-budget)
 
 
-This repository is accompanying the paper "Power Control for Resilient
+This repository is accompanying the papers "Power Control for Resilient
 Communication Systems With a Secret-Key Budget" (Karl-L. Besser, Rafael
 Schaefer, and Vincent Poor, IEEE International Symposium on Personal, Indoor
-and Mobile Radio Communications (PIMRC), Sep. 2024).
+and Mobile Radio Communications (PIMRC), Sep. 2024) and "Building Resilience in
+Wireless Communication Systems With a Secret-Key Budget" (Karl-L. Besser,
+Rafael Schaefer, and Vincent Poor, Jul. 2024).
 
 The idea is to give an interactive version of the calculations and presented
 concepts to the reader. One can also change different parameters and explore
@@ -31,6 +33,14 @@ The following files are provided in this repository:
   fading (distribution functions, ...).
 - `combine_results.py`: Python script that combines results with different
   constant power levels at given time slots.
+- `comparison.py`: Python module containing different power allocation
+  algorithms.
+- `environment.py`: Python module that contains the RLlib environment.
+- `configs.py`: Python module that contains the configuration of the
+  environment.
+- `train.py`: Python script that starts the training of the RL agent.
+- `evaluate_parallel.py`: Python script that evaluates all different algorithms
+  (constant, adaptive, RL, ...) in parallel.
 
 
 ## Usage
@@ -43,11 +53,14 @@ to run the scripts online.
 If you want to run it locally on your machine, Python3 and Jupyter are needed.
 The present code was developed and tested with the following versions:
 
-- Python 3.12
+- Python 3.10
 - numpy 1.26
-- scipy 1.13
+- scipy 1.10
 - matplotlib 3.9
 - pandas 2.2
+- ray 2.9
+- torch 1.12
+- joblib 1.1
 
 Make sure you have [Python3](https://www.python.org/downloads/) installed on
 your computer.
