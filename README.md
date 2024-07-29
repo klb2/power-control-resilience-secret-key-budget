@@ -2,6 +2,7 @@
 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/klb2/power-control-resilience-secret-key-budget)
 ![GitHub](https://img.shields.io/github/license/klb2/power-control-resilience-secret-key-budget)
+[![arXiv](https://img.shields.io/badge/arXiv-2407.11604-informational)](https://arxiv.org/abs/2407.11604)
 
 
 This repository is accompanying the papers "Power Control for Resilient
@@ -9,7 +10,8 @@ Communication Systems With a Secret-Key Budget" (Karl-L. Besser, Rafael
 Schaefer, and Vincent Poor, IEEE International Symposium on Personal, Indoor
 and Mobile Radio Communications (PIMRC), Sep. 2024) and "Building Resilience in
 Wireless Communication Systems With a Secret-Key Budget" (Karl-L. Besser,
-Rafael Schaefer, and Vincent Poor, Jul. 2024).
+Rafael Schaefer, and Vincent Poor, Jul. 2024.
+[arXiv:2407.11604](https://arxiv.org/abs/2407.11604)).
 
 The idea is to give an interactive version of the calculations and presented
 concepts to the reader. One can also change different parameters and explore
