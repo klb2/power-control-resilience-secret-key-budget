@@ -8,7 +8,8 @@
 This repository is accompanying the papers "Power Control for Resilient
 Communication Systems With a Secret-Key Budget" (Karl-L. Besser, Rafael
 Schaefer, and Vincent Poor, IEEE International Symposium on Personal, Indoor
-and Mobile Radio Communications (PIMRC), Sep. 2024) and "Building Resilience in
+and Mobile Radio Communications (PIMRC), Sep. 2024.
+[doi:10.1109/PIMRC59610.2024.10817163](https://doi.org/10.1109/PIMRC59610.2024.10817163)) and "Building Resilience in
 Wireless Communication Systems With a Secret-Key Budget" (Karl-L. Besser,
 Rafael Schaefer, and Vincent Poor, Jul. 2024.
 [arXiv:2407.11604](https://arxiv.org/abs/2407.11604)).
@@ -16,6 +17,8 @@ Rafael Schaefer, and Vincent Poor, Jul. 2024.
 The idea is to give an interactive version of the calculations and presented
 concepts to the reader. One can also change different parameters and explore
 different behaviors on their own.
+
+The material for the conference paper can be found on the `pimrc` branch. The `master` branch contains the scripts for the journal version.
 
 
 ## File List
@@ -97,10 +100,11 @@ You can use the following BibTeX entry
 @inproceedings{Besser2024pimrc,
   author = {Besser, Karl-Ludwig and Schaefer, Rafael F. and Poor, H. Vincent},
   title = {Power Control for Resilient Communication Systems With a Secret-Key Budget},
-  booktitle = {2024 IEEE International Symposium on Personal, Indoor and Mobile Radio Communications (PIMRC)},
+  booktitle = {2024 IEEE 35th International Symposium on Personal, Indoor and Mobile Radio Communications (PIMRC)},
   year = {2024},
   month = {9},
   publisher = {IEEE},
   venue = {Valencia, Spain},
+  doi = {10.1109/PIMRC59610.2024.10817163},
 }
 ```
